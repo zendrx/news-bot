@@ -1,12 +1,13 @@
 # news_bot.rb
 require 'telegem'
 require 'httparty'
-require 'uri'
+require 'dotenv/load'
 
 class NewsBot
   API_BASE = "https://zen-drx-api.onrender.com"
   
   def initialize(token)
+    token = ENV['BOT_TOKEN']
     @bot = Telegem.new(token)
     setup_handlers
   end
@@ -27,17 +28,17 @@ class NewsBot
     end
     
     # News command - shows top 10
-    @bot.command(:news) do |ctx|
+    @bot.command("news") do |ctx|
       fetch_and_send(ctx, limit: 10)
     end
     
     # Latest command - shows top 5
-    @bot.command(:latest) do |ctx|
+    @bot.command("latest") do |ctx|
       fetch_and_send(ctx, limit: 5)
     end
     
     # Sources command
-    @bot.command(:sources) do |ctx|
+    @bot.command("sources") do |ctx|
       ctx.reply(
         "📡 *News Sources*\n\n" \
         "• Hacker News - Top stories from tech community\n" \
@@ -126,36 +127,6 @@ class NewsBot
     
     lines.join("\n")
   end
+  @bot.start_polling
+end 
   
-  def start
-    puts "🤖 News Bot starting..."
-    
-    # Use webhook in production, polling for development
-    if ENV['RENDER']
-      # Production: Webhook mode
-      webhook_url = ENV['WEBHOOK_URL']
-      @bot.set_webhook(url: webhook_url)
-      
-      server = @bot.webhook(port: ENV['PORT'].to_i, host: '0.0.0.0')
-      server.run
-    else
-      # Development: Polling mode
-      @bot.start_polling
-    end
-  end
-end
-
-# Run the bot
-if __FILE__ == $0
-  token = ENV['BOT_TOKEN'] || ARGV[0]
-  unless token
-    puts "Usage: BOT_TOKEN=your_token ruby news_bot.rb"
-    exit 1
-  end
-  
-  bot = NewsBot.new(token)
-  bot.start
-  
-  # Keep the script running
-  sleep
-end
